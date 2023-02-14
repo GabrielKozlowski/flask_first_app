@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
+from haslo import identyfikation_string
 
 
 # Create a Flask Instance
@@ -15,8 +15,11 @@ app = Flask(__name__)
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 
 
+# import password from file
+pass_for_mysql = identyfikation_string
+
 # New MySQL DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://fif:9Kurwa9testuje9@localhost/our_users'
+app.config['SQLALCHEMY_DATABASE_URI'] = pass_for_mysql
 # Add Secret Key!
 app.config["SECRET_KEY"] = "my super key"
 # initialize The Database
