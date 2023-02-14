@@ -17,8 +17,7 @@
 {% if name %}
     <h1>Hello {{ name }} !!</h1>
     <br/>
-    <img src="{{ url_for("static", filename='images/wawel.png')}}"
-    width=1300>
+    <img src="{{ url_for("static", filename='images/wawel.png')}}">
     <br/><br/>
     <p id="demo">This is stuff...</p>
 
@@ -33,7 +32,7 @@
 
         {{ form.name.label(class="form-label") }}
 
-        {{ form.name(class="form-control") }}
+        {{ form.name(class="form-control", id='label-text') }}
         <br/>
         {{ form.submit(class="btn btn-outline-success") }}
 
