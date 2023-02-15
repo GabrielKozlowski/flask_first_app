@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, request
+from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
 from wtforms.validators import DataRequired, EqualTo, Length
@@ -48,12 +48,20 @@ class PostForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+
 # Add Posts
 @app.route('/posts')
 def posts():
     # Grab all the posts from the database
     posts = Posts.query.order_by(Posts.date_posted)
     return render_template('posts.html', posts=posts)
+
+# Show Post 
+@app.route('/posts/<int:id>')
+def post(id):
+    post = Posts.query.get_or_404(id)
+    return render_template('post.html', post=post)
+
 
 
 # Add Post Page
@@ -78,6 +86,46 @@ def add_post():
     # Redirect To The Webpage
     return render_template("add_post.html", form=form)
 
+# Edit Post
+@app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
+def edit_post(id):
+    post = Posts.query.get_or_404(id)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.author = form.author.data
+        post.slug = form.slug.data
+        post.content = form.content.data
+        # Update Database
+        db.session.add(post)
+        db.session.commit()
+        flash("Post Has Been Updated!")
+        return redirect(url_for('post', id=post.id))
+    form.title.data = post.title
+    form.author.data = post.author
+    form.slug.data = post.slug
+    form.content.data = post.content
+    return render_template('edit_post.html', form=form)
+
+
+# Delete Post
+@app.route('/posts/delete/<int:id>')
+def delete_post(id):
+    post_to_delete = Posts.query.get_or_404(id)
+
+    try:
+        db.session.delete(post_to_delete)
+        db.session.commit()
+        # Return Message
+        flash("Post Deleted Successfully!")
+
+        our_posts = Posts.query.order_by(Posts.date_posted)
+        return render_template("deleted_post.html", our_posts=our_posts)
+
+    except:
+        # Return Error Message
+        flash("Whooops! There was a problem deleting post, try again...")
+        return render_template("deleted_post.html", our_posts=our_posts)
 
 
 # Json Thing
@@ -209,7 +257,7 @@ def delete(id):
             name=name,
             our_users=our_users)
     except:
-        flash("Whooops! There was a problem deliting users, try again... ")
+        flash("Whooops! There was a problem deleting users, try again... ")
         return render_template("deleted_user.html",
             form=form,
             name=name,
