@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from haslo import identyfikation_string
 from datetime import date
+from wtforms.widgets import TextArea
 
 # Create a Flask Instance
 app = Flask(__name__)
@@ -30,7 +31,7 @@ migrate = Migrate(app, db)
 
 # Create a BLog Post model
 class Posts(db.Model):
-    id = db.Column(db.Inrtiger, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
     content = db.Column(db.Text)
     author = db.Column(db.String(255))
@@ -38,6 +39,44 @@ class Posts(db.Model):
     slug = db.Column(db.String(255))
 
 
+# Create a Posts Form
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = StringField('Content', validators=[DataRequired()], widget=TextArea())
+    author = StringField('Author', validators=[DataRequired()])
+    slug = StringField('Slug', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+# Add Posts
+@app.route('/posts')
+def posts():
+    # Grab all the posts from the database
+    posts = Posts.query.order_by(Posts.date_posted)
+    return render_template('posts.html', posts=posts)
+
+
+# Add Post Page
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+
+    if form.validate_on_submit():
+        post = Posts(title=form.title.data, content=form.content.data, author=form.author.data, slug=form.slug.data)
+        # Clear The Form
+        form.title.data = ''
+        form.content.data = ''
+        form.author.data = ''
+        form.slug.data = ''
+
+        # Add Post Data to Database
+        db.session.add(post)
+        db.session.commit()
+
+        # Return A Message
+        flash("Blog Post Submitted Successfully !!")
+    # Redirect To The Webpage
+    return render_template("add_post.html", form=form)
 
 
 
