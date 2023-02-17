@@ -192,30 +192,49 @@ def edit_post(id):
         db.session.commit()
         flash("Post Has Been Updated!")
         return redirect(url_for('post', id=post.id))
-    form.title.data = post.title
-    # form.author.data = post.author
-    form.slug.data = post.slug
-    form.content.data = post.content
-    return render_template('edit_post.html', form=form)
+    
+    if current_user.id == post.poster_id:
+        form.title.data = post.title
+        # form.author.data = post.author
+        form.slug.data = post.slug
+        form.content.data = post.content
+        return render_template('edit_post.html', form=form)
+    else:
+        flash("You Aren't Authorized To Edit This Post !!!")
+        posts = Posts.query.order_by(Posts.date_posted)
+        return render_template('posts.html', posts=posts)
+
 
 
 # Delete Post
 @app.route('/posts/delete/<int:id>')
+@login_required
 def delete_post(id):
     post_to_delete = Posts.query.get_or_404(id)
-    try:
-        db.session.delete(post_to_delete)
-        db.session.commit()
-        # Return Message
-        flash("Post Deleted Successfully!")
+    id = current_user.id
+    if id == post_to_delete.poster.id:
 
-        our_posts = Posts.query.order_by(Posts.date_posted)
-        return render_template("deleted_post.html", our_posts=our_posts)
+        try:
+            db.session.delete(post_to_delete)
+            db.session.commit()
+            # Return Message
+            flash("Post Deleted Successfully!")
 
-    except:
-        # Return Error Message
-        flash("Whooops! There was a problem deleting post, try again...")
-        return render_template("deleted_post.html", our_posts=our_posts)
+            # Grab all the posts from the database
+            posts = Posts.query.order_by(Posts.date_posted)
+            return render_template("deleted_post.html", posts=posts)
+
+        except:
+            # Return Error Message
+            flash("Whooops! There was a problem deleting post, try again...")
+            return render_template("deleted_post.html", posts=posts)
+        
+    else:
+        flash("You Aren't Authorized To Delete This Post !!!")
+
+        # Grab all the posts from the database
+        posts = Posts.query.order_by(Posts.date_posted)
+        return render_template("posts.html", posts=posts)
 
 
 
