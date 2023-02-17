@@ -2,7 +2,6 @@
 
 {% block content %}
 
-
 {% for message in get_flashed_messages() %}
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ message }}
@@ -38,6 +37,9 @@
         {{ form.submit(class="btn btn-outline-success") }}
 
     </form>
+    {{ ckeditor.load() }}
+    {{ ckeditor.config(name='content') }}
+
 </div>
 <a href="{{ url_for('posts') }}", class="btn btn-outline-secondary btn-sm">Back To Posts</a>
 

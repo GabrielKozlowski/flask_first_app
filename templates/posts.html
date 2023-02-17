@@ -18,10 +18,10 @@
 <table class="table table-hover table-bordered table-striped">
 {% for post in posts %}
 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
-    <h2>{{ post.title }}</h2>
+    <h2><a href="{{ url_for('post', id=post.id) }}">{{ post.title }}</a></h2>
     By: {{ post.poster.name }}<br/>
     {{ post.slug }} -  {{ post.date_posted }}<br/><br/>
-    {{ post.content }}
+    {{ post.content|safe }}
     <br/><br/>
 
     <a href="{{ url_for('post', id=post.id) }}", class="btn btn-outline-success btn-sm">Viev Post</a>

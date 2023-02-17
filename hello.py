@@ -6,11 +6,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from haslo import identyfikation_string
 from datetime import date
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from webforms import LoginForm, PostForm, UserForm, PasswordForm, NameForm
+from webforms import LoginForm, PostForm, UserForm, PasswordForm, NameForm, SearchForm
+from flask_ckeditor import CKEditor
 
 
 # Create a Flask Instance
 app = Flask(__name__)
+# Add CKEditor
+ckeditor = CKEditor(app)
 # Add Database
 # Old SQLite DB
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
@@ -32,6 +35,8 @@ migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+
 
 
 @login_manager.user_loader
@@ -298,6 +303,35 @@ def dashboard():
                 name_to_update = name_to_update,
                 id=id)
     return render_template('dashboard.html')
+
+
+
+# Pass Stuff To Navbar
+@app.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
+
+
+# Create Search Function
+@app.route('/search', methods=['POST'])
+def search():
+    form = SearchForm()
+    posts = Posts.query
+    if form.validate_on_submit():
+        # Get data from submitted form
+        post.searched = form.searched.data
+        # Query the Database
+        posts = posts.filter(Posts.content.like('%' + post.searched + '%'))
+        posts = posts.order_by(Posts.title).all()
+
+        return render_template('search.html',
+            form=form,
+            searched=post.searched,
+            posts=posts)
+
+
+
 
 
 # localhost:5000/user/john
