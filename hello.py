@@ -83,6 +83,7 @@ def add_user():
 
 # Update Users/Database Record
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
+@login_required
 def update(id):
     form = UserForm()
     name_to_update = Users.query.get_or_404(id)
@@ -96,12 +97,14 @@ def update(id):
             flash("User Updated successfully!")
             return render_template("update.html",
                 form=form,
-                name_to_update = name_to_update)
+                name_to_update = name_to_update,
+                id=id)
         except:
             flash("Error! Looks like there was a problem...try again!")
             return render_template("update.html",
                 form=form,
-                name_to_update = name_to_update)
+                name_to_update = name_to_update,
+                id=id)
     else:
         return render_template("update.html",
                 form=form,
@@ -149,6 +152,31 @@ def post(id):
     return render_template('post.html', post=post)
 
 
+# Add Post Page
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+
+    if form.validate_on_submit():
+        poster = current_user.id
+        post = Posts(title=form.title.data, content=form.content.data, poster_id=poster, slug=form.slug.data)
+        # Clear The Form
+        form.title.data = ''
+        form.content.data = ''
+        # form.author.data = ''
+        form.slug.data = ''
+
+        # Add Post Data to Database
+        db.session.add(post)
+        db.session.commit()
+
+        # Return A Message
+        flash("Blog Post Submitted Successfully !!")
+    # Redirect To The Webpage
+    return render_template("add_post.html", form=form)
+
+
+
 # Edit Post
 @app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
 def edit_post(id):
@@ -156,7 +184,7 @@ def edit_post(id):
     form = PostForm()
     if form.validate_on_submit():
         post.title = form.title.data
-        post.author = form.author.data
+        # post.author = form.author.data
         post.slug = form.slug.data
         post.content = form.content.data
         # Update Database
@@ -165,7 +193,7 @@ def edit_post(id):
         flash("Post Has Been Updated!")
         return redirect(url_for('post', id=post.id))
     form.title.data = post.title
-    form.author.data = post.author
+    # form.author.data = post.author
     form.slug.data = post.slug
     form.content.data = post.content
     return render_template('edit_post.html', form=form)
@@ -253,29 +281,6 @@ def dashboard():
     return render_template('dashboard.html')
 
 
-# Add Post Page
-@app.route('/add-post', methods=['GET', 'POST'])
-def add_post():
-    form = PostForm()
-
-    if form.validate_on_submit():
-        post = Posts(title=form.title.data, content=form.content.data, author=form.author.data, slug=form.slug.data)
-        # Clear The Form
-        form.title.data = ''
-        form.content.data = ''
-        form.author.data = ''
-        form.slug.data = ''
-
-        # Add Post Data to Database
-        db.session.add(post)
-        db.session.commit()
-
-        # Return A Message
-        flash("Blog Post Submitted Successfully !!")
-    # Redirect To The Webpage
-    return render_template("add_post.html", form=form)
-
-
 # localhost:5000/user/john
 @app.route('/user/<name>')
 def user(name):
@@ -349,17 +354,6 @@ def page_not_found(e):
     return render_template("500.html"), 500
 
 
-# Create a BLog Post model
-class Posts(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255))
-    content = db.Column(db.Text)
-    author = db.Column(db.String(255))
-    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
-    slug = db.Column(db.String(255))
-
-
-
 # Create Model
 class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -370,6 +364,8 @@ class Users(db.Model, UserMixin):
     date_added =db.Column(db.DateTime, default=datetime.utcnow)
     # Do nome password stuff!
     password_hash = db.Column(db.String(128))
+    # Users Can Have Many Posts
+    posts = db.relationship('Posts', backref='poster')
 
     @property
     def password(self):
@@ -389,6 +385,17 @@ class Users(db.Model, UserMixin):
         return '<Name %r>' % self.name
 
 
+
+# Create a BLog Post model
+class Posts(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    content = db.Column(db.Text)
+    # author = db.Column(db.String(255))
+    date_posted = db.Column(db.DateTime, default=datetime.utcnow)
+    slug = db.Column(db.String(255))
+    # Foreing Key To Link Users (refer to primary key of the user)
+    poster_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 
 
