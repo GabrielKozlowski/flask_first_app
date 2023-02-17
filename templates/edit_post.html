@@ -14,7 +14,9 @@
 
 
 
-<br/><br/>
+<br/>
+<h2>Edit Post...</h2>
+<br/>
 <table class="table table-hover table-bordered table-striped">
 
 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
@@ -41,6 +43,8 @@
         {{ form.submit(class="btn btn-outline-success") }}
         <a href="{{ url_for('posts') }}", class="btn btn-outline-secondary">Back To Posts</a>
     </form>
+    {{ ckeditor.load() }}
+    {{ ckeditor.config(name='content') }}
 </div>    
 
 </table>

@@ -19,9 +19,10 @@
 {% for post in posts %}
 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
     <h2><a href="{{ url_for('post', id=post.id) }}">{{ post.title }}</a></h2>
-    By: {{ post.poster.name }}<br/>
-    {{ post.slug }} -  {{ post.date_posted }}<br/><br/>
-    {{ post.content|safe }}
+    <strong>By: </strong>{{ post.poster.name }}<br/>
+    <strong>Slug: </strong>{{ post.slug }}<br/>
+    <strong>Date: </strong>{{ post.date_posted }}<br/><br/>
+    <strong>Content:  </strong>{{ post.content|safe }}
     <br/><br/>
 
     <a href="{{ url_for('post', id=post.id) }}", class="btn btn-outline-success btn-sm">Viev Post</a>
@@ -37,6 +38,6 @@
 {% endfor %}
 
 <a href="{{ url_for('add_post') }}", class="btn btn-outline-success">Add Blog Post</a>
-
+ 
 
 {% endblock %}

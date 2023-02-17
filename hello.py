@@ -57,6 +57,17 @@ def index():
             favorite_pizza = favorite_pizza)
 
 
+# Create A Admin Page 
+@app.route('/admin')
+@login_required
+def admin():
+    id = current_user.id
+    if id == 39:
+        return render_template('admin.html')
+    else:
+        flash("You Aren't Authorized To This Site !!")
+        return redirect(url_for('dashboard'))
+
 
 # Adding Users
 @app.route('/user/add', methods=['GET', 'POST'])
@@ -303,6 +314,7 @@ def dashboard():
                 name_to_update = name_to_update,
                 id=id)
     return render_template('dashboard.html')
+
 
 
 
