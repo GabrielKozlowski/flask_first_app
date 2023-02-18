@@ -1,1 +1,0 @@
-identyfikation_string = 'mysql+pymysql://fif:9Kurwa9testuje9@localhost/our_users'
