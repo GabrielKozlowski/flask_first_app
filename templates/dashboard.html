@@ -32,13 +32,19 @@
               <strong>Favorite Color: </strong>{{ current_user.favorite_color }}<br/>
               <strong>About Author: </strong>{{ current_user.about_author }}<br/>
               <strong>Date Joined: </strong>{{ current_user.date_added }}<br/>
+              <strong>Profile Pic: </strong>{{ current_user.profile_pic }}<br/>
               <br/>
               <a href="{{ url_for('logout') }}", class="btn btn-outline-secondary btn-sm">Logout</a>
               <a href="{{ url_for('update', id=current_user.id)}}", class="btn btn-outline-primary btn-sm">Update Profile</a>
               <a href="{{ url_for('delete', id=current_user.id)}}" class="btn btn-outline-danger btn-sm">Delete</a>
             </div>
             <div class="col-4">
-            <img src="{{ url_for('static', filename='images/default_avatar.png') }}" width="150" align="right">
+
+            {% if current_user.profile_pic %}
+              <img src="{{ url_for('static', filename='images/' + current_user.profile_pic) }}" width="150" align="right">
+            {% else %}
+              <img src="{{ url_for('static', filename='images/default_avatar.png') }}" width="150" align="right">
+            {% endif %}
             </div>
           </div>
         </div>
@@ -54,7 +60,7 @@
         Update Profile
     </div>
     <div class="card-body">
-      <form action="/dashboard" method="POST">
+      <form action="/dashboard" method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
 
         {{ form.name.label(class="form-label") }}
@@ -84,6 +90,12 @@
         </textarea>
         <br/>
 
+        {{ form.profile_pic.label(class="form-label")}}
+
+        {{ form.profile_pic(class="form-control", value=name_to_update.profile_pic) }}
+        <br/><br/>
+        
+        
         {{ form.submit(class="btn btn-outline-success btn-sm") }}
 
 

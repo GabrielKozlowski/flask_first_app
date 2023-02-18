@@ -40,9 +40,10 @@
         {{ form.favorite_color(class="form-control", value=name_to_update.favorite_color) }}
         <br/>
 
-        {{ form.submit(class="btn btn-outline-success") }}
+        {{ form.submit(class="btn btn-outline-success btn-sm") }}
 
-        <a href="{{ url_for('delete', id=id)}}" class="btn btn-outline-danger">Delete</a>
+        <a href="{{ url_for('delete', id=id)}}" class="btn btn-outline-danger btn-sm">Delete</a>
+        <a href="{{ url_for('dashboard') }}", class="btn btn-outline-secondary btn-sm">Back To Dashboard</a>
 
     </form>
 </div>

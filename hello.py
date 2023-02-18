@@ -8,6 +8,10 @@ from datetime import date
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from webforms import LoginForm, PostForm, UserForm, PasswordForm, NameForm, SearchForm
 from flask_ckeditor import CKEditor
+from werkzeug.utils import secure_filename
+import uuid as uuid
+import os
+
 
 
 # Create a Flask Instance
@@ -18,15 +22,18 @@ ckeditor = CKEditor(app)
 # Old SQLite DB
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 
-
+# Password To MYSql Imported From Another File
 pass_to_mysql = identyfikation_string
-
 
 # New MySQL DB
 app.config['SQLALCHEMY_DATABASE_URI'] = pass_to_mysql
 # Add Secret Key!
 app.config["SECRET_KEY"] = "my super key"
 # initialize The Database
+
+UPLOAD_FOLDER = 'static/images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
@@ -35,7 +42,6 @@ migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-
 
 
 
@@ -80,7 +86,8 @@ def add_user():
             # Hash password!!!
             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
 
-            user = Users(username=form.username.data, name=form.name.data,  email=form.email.data, favorite_color=form.favorite_color.data, password_hash=hashed_pw)
+            user = Users(username=form.username.data, name=form.name.data,  email=form.email.data, 
+                         favorite_color=form.favorite_color.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
@@ -130,28 +137,33 @@ def update(id):
 
 # Delete User
 @app.route('/delete/<int:id>')
+@login_required
 def delete(id):
-    user_to_delete = Users.query.get_or_404(id)  
-    name = None
-    form = UserForm()
-    
-    try:
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        flash("Deleting users successfully !!")
+    if id == current_user.id:
 
-        our_users = Users.query.order_by(Users.date_added)
-        return render_template("deleted_user.html",
-            form=form,
-            name=name,
-            our_users=our_users)
-    except:
-        flash("Whooops! There was a problem deleting users, try again... ")
-        return render_template("deleted_user.html",
-            form=form,
-            name=name,
-            our_users=our_users)
+        user_to_delete = Users.query.get_or_404(id)  
+        name = None
+        form = UserForm()
+        
+        try:
+            db.session.delete(user_to_delete)
+            db.session.commit()
+            flash("Deleting users successfully !!")
 
+            our_users = Users.query.order_by(Users.date_added)
+            return render_template("deleted_user.html",
+                form=form,
+                name=name,
+                our_users=our_users)
+        except:
+            flash("Whooops! There was a problem deleting users, try again... ")
+            return render_template("deleted_user.html",
+                form=form,
+                name=name,
+                our_users=our_users)
+    else:
+        flash("Sorry You Can't Delete That User !!!")
+        return redirect(url_for("dashboard"))
 
 # Add Posts
 @app.route('/posts')
@@ -175,7 +187,8 @@ def add_post():
 
     if form.validate_on_submit():
         poster = current_user.id
-        post = Posts(title=form.title.data, content=form.content.data, poster_id=poster, slug=form.slug.data)
+        post = Posts(title=form.title.data, content=form.content.data,
+                      poster_id=poster, slug=form.slug.data)
         # Clear The Form
         form.title.data = ''
         form.content.data = ''
@@ -209,7 +222,7 @@ def edit_post(id):
         flash("Post Has Been Updated!")
         return redirect(url_for('post', id=post.id))
     
-    if current_user.id == post.poster_id:
+    if current_user.id == post.poster_id or current_user.id == 39:
         form.title.data = post.title
         # form.author.data = post.author
         form.slug.data = post.slug
@@ -228,7 +241,7 @@ def edit_post(id):
 def delete_post(id):
     post_to_delete = Posts.query.get_or_404(id)
     id = current_user.id
-    if id == post_to_delete.poster.id:
+    if id == post_to_delete.poster.id or id == 39:
 
         try:
             db.session.delete(post_to_delete)
@@ -251,10 +264,6 @@ def delete_post(id):
         # Grab all the posts from the database
         posts = Posts.query.order_by(Posts.date_posted)
         return render_template("posts.html", posts=posts)
-
-
-
-
 
 
 
@@ -298,23 +307,44 @@ def dashboard():
         name_to_update.favorite_color = request.form['favorite_color']
         name_to_update.username = request.form['username']
         name_to_update.about_author = request.form['about_author']
-        try:
+        
+
+        # Check for profile pic
+        if request.files['profile_pic']:
+            name_to_update.profile_pic = request.files['profile_pic']
+
+            # Grab Image Name
+            pic_filename = secure_filename(name_to_update.profile_pic.filename)
+            # Set UUID
+            pic_name = str(uuid.uuid1()) + "_" + pic_filename
+
+            # Save That Image
+            saver = request.files['profile_pic']
+                
+            # Change it to a string to save to db
+            name_to_update.profile_pic = pic_name
+            try:
+                db.session.commit()
+                saver.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name)) 
+                flash("User Updated successfully!")
+                return render_template("dashboard.html",
+                    form=form,
+                    name_to_update = name_to_update)
+            except:
+                flash("Error! Looks like there was a problem...try again!")
+                return render_template("dashboard.html",
+                    form=form,
+                    name_to_update = name_to_update)
+        else:
             db.session.commit()
             flash("User Updated successfully!")
-            return render_template("dashboard.html",
-                form=form,
-                name_to_update = name_to_update)
-        except:
-            flash("Error! Looks like there was a problem...try again!")
-            return render_template("dashboard.html",
-                form=form,
-                name_to_update = name_to_update)
+            return render_template("dashboard.html", form=form, name_to_update = name_to_update)
+
     else:
         return render_template("dashboard.html",
                 form=form,
                 name_to_update = name_to_update,
                 id=id)
-    return render_template('dashboard.html')
 
 
 
@@ -345,12 +375,11 @@ def search():
 
 
 
-
-
 # localhost:5000/user/john
 @app.route('/user/<name>')
 def user(name):
     return render_template('user.html', user_name = name)
+
 
 
 # Create Password Page
@@ -369,10 +398,8 @@ def test_pw():
         # Clear the form
         form.email.data = ''
         form.password_hash.data = ''
-
         # Lookup User By Email Address
         pw_to_check = Users.query.filter_by(email=email).first()
-
         # Check Hashed Password
         passed = check_password_hash(pw_to_check.password_hash, password)
 
@@ -394,7 +421,6 @@ def name():
         name = form.name.data
         form.name.data = ''
         flash("Form Submitted Successfull")
-
     return render_template('name.html',
         name = name,
         form = form)
@@ -428,7 +454,8 @@ class Users(db.Model, UserMixin):
     email = db.Column(db.String(120), nullable=False, unique=True)
     favorite_color = db.Column(db.String(120))
     about_author = db.Column(db.Text(500), nullable=True)
-    date_added =db.Column(db.DateTime, default=datetime.utcnow)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow)
+    profil_pic = db.Column(db.String(500), nullable=True)
     # Do nome password stuff!
     password_hash = db.Column(db.String(128))
     # Users Can Have Many Posts
@@ -468,6 +495,3 @@ class Posts(db.Model):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-### $env:FLASK_APP = 'hello'
