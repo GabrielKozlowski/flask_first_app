@@ -1,17 +1,17 @@
 from flask import Flask, render_template, flash, request, redirect, url_for
-from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from werkzeug.security import generate_password_hash, check_password_hash
-from haslo import identyfikation_string
-from datetime import date
 from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
-from webforms import LoginForm, PostForm, UserForm, PasswordForm, NameForm, SearchForm
 from flask_ckeditor import CKEditor
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash#
+
+from datetime import datetime, date
 import uuid as uuid
 import os
 
+from webforms import LoginForm, PostForm, UserForm, PasswordForm, NameForm, SearchForm
+from haslo import identyfikation_string
 
 
 # Create a Flask Instance
@@ -284,6 +284,7 @@ def login():
         else:
             flash("That User Doesn't Exist - Try Again...")
     return render_template('login.html', form=form)
+
 
 # Create Logout Page
 @app.route('/logout', methods=['GET', 'POST'])
